@@ -1,82 +1,20 @@
 import { VM } from "vm2";
 import db from "../../../lib/db";
 
-// import { VM } from "vm2";
-// import { getCode } from "$services";
-// import type { RequestEvent } from "./$types";
-
-// type Data = Record<string, any>;
-// type DataResult = {id: string, value: Data}
-
-// type Collection = {
-//   insert: (data: Data) => DataResult;
-//   remove: (id: string) => boolean;
-//   update: (id: string, data: Data) => DataResult;
-//   get: (id: string) => DataResult;
-//   find: (filter: Data, options: {skip?: number, take?: number}) => DataResult[]
-// }
-
-// async function handle({ request, params }: RequestEvent) {
-//   const id = params.id;
-//   console.log("New Request -------------- " + id);
-
-//   const { code } = await getCode({ name: id });
-
-//   if (!code) {
-//     return new Response(
-//       JSON.stringify({ message: "Function doesn't exists" }),
-//       { status: 404 }
-//     );
-//   }
-
-//   const input = code + "\nhandle(__request);";
-
-//   try {
-//     const vm = new VM({ timeout: 5000 });
-//     vm.freeze(request, "__request");
-//     vm.freeze(fetch, 'fetch')
-//     vm.freeze(Headers, 'Headers')
-//     vm.freeze(Response, 'Response')
-//     vm.freeze(DB, 'DB')
-
-//     const output = await vm.run(input);
-//     console.log(output);
-
-//     if (output instanceof Response) {
-//       return output;
-//     } else if (typeof output === "object") {
-//       const headers = output.headers ?? {};
-//       const status = output.status ?? 200;
-//       const body = output.body;
-
-//       const bodyInit = typeof body === "object" ? JSON.stringify(body) : body;
-
-//       return new Response(bodyInit, {
-//         status,
-//         headers,
-//       });
-//     } else if (typeof output === "string" || typeof output === "number") {
-//       return new Response(output.toString(), { status: 200 });
-//     }
-//   } catch (err) {
-//     console.log(err);
-//     return new Response("Internal Server Error", { status: 500 });
-//     // res.status(500).send("internal server error");
-//   }
-// }
-
-async function runJS(request, js, DB) {
+async function runJS(request, js, env, DB) {
   const input = js + "\nhandle(__request);";
 
-  const vm = new VM({ timeout: 5000 });
+  const vm = new VM({ timeout: 2000 });
   vm.freeze(request, "__request");
   vm.freeze(fetch, "fetch");
   vm.freeze(Headers, "Headers");
+  vm.freeze(URL, "URL");
+  vm.freeze(crypto, "crypto");
   vm.freeze(Response, "Response");
   vm.freeze(DB, "DB");
+  vm.freeze(env, "env");
 
   const output = await vm.run(input);
-  console.log(output);
 
   if (output instanceof Response) {
     return output;
@@ -93,6 +31,9 @@ async function runJS(request, js, DB) {
     });
   } else if (typeof output === "string" || typeof output === "number") {
     return new Response(output.toString(), { status: 200 });
+  } else {
+    console.log("no return");
+    return new Response();
   }
 }
 
@@ -107,7 +48,7 @@ function respond(body, status) {
 async function getFunction({ project, name, apiKey }) {
   console.log("HERE6");
   const [projectObject, functionObject] = await Promise.all([
-    db("projects").select("apiKey").where({ name: project }).first(),
+    db("projects").select("*").where({ name: project }).first(),
     db("functions").select("code").where({ name, project }).first(),
   ]);
   console.log("HERE55");
@@ -124,7 +65,10 @@ async function getFunction({ project, name, apiKey }) {
   if (!functionObject) error("function not found");
 
   console.log("HERE 9");
-  return functionObject.code;
+  return {
+    code: functionObject.code,
+    env: projectObject.env ?? { TODO: "true" },
+  };
 }
 
 function createDB(project) {
@@ -171,7 +115,7 @@ function createDB(project) {
       async find(filter = {}, options = {}) {
         let result = await db("rows")
           .select("data", "id")
-          .where({ project, options });
+          .where({ project, collection });
         const take = options.take ?? -1;
         const skip = options.skip ?? 0;
 
@@ -209,11 +153,11 @@ async function handle({ params, locals, request }) {
 
     // console.log("HERE3");
 
-    const code = await getFunction({ project, name, apiKey });
+    const { code, env } = await getFunction({ project, name, apiKey });
     console.log("CODE", code);
 
     try {
-      const result = await runJS(request, code, createDB(project));
+      const result = await runJS(request, code, env, createDB(project));
       console.log(result);
       return result;
     } catch (err) {
