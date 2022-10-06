@@ -203,29 +203,30 @@ async function handle({ params, locals, request }) {
 
   // console.log("HERE1");
   try {
-    if (!apiKey)
-      throw new ResponseError(
-        "You should set ApiKey header to project's apiKey",
-        401
-      );
+    if (!project) error("Project not found", 404);
 
-    // console.log("HERE2");
-    if (!project) throw new ResponseError("Project not found", 404);
+    if (!apiKey) error("You should set ApiKey header", 401);
 
     // console.log("HERE3");
+
     const code = await getFunction({ project, name, apiKey });
     console.log("CODE", code);
 
-    const result = await runJS(request, code, createDB(project));
-    console.log(result);
-    return result;
+    try {
+      const result = await runJS(request, code, createDB(project));
+      console.log(result);
+      return result;
+    } catch (err) {
+      error("JS Error: " + err.message, 400);
+    }
   } catch (err) {
     // console.log("HERE5");
     // console.log(err);
     const er = JSON.parse(err.message);
-    return respond({ message: er.message }, er.status);
+    return respond({ message: er.message, status: er.status }, er.status);
   }
 }
+
 export { handle as GET };
 export { handle as POST };
 export { handle as PUT };
