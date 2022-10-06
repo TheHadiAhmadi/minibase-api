@@ -13,5 +13,10 @@
 		"svelte": "^3.44.0",
 		"vite": "^3.1.0"
 	},
-	"type": "module"
+	"type": "module",
+	"dependencies": {
+		"knex": "^2.3.0",
+		"pg": "^8.8.0",
+		"vm2": "^3.9.11"
+	}
 }
