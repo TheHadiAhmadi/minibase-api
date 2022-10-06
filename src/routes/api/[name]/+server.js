@@ -45,22 +45,22 @@ function respond(body, status) {
   return new Response(JSON.stringify(body), { status });
 }
 
-async function getFunction({ project, name, apiKey }) {
+async function getFunction({ project, name }) {
   console.log("HERE6");
   const [projectObject, functionObject] = await Promise.all([
     db("projects").select("*").where({ name: project }).first(),
     db("functions").select("code").where({ name, project }).first(),
   ]);
-  console.log("HERE55");
+  // console.log("HERE55");
 
   if (!projectObject) error("Project not found", 404);
 
-  console.log({ projectObject, apiKey, functionObject });
-  console.log("HERE7");
-  if (!projectObject?.apiKey || projectObject?.apiKey !== apiKey) {
-    console.log("HERE8");
-    error("ApiKey doesn't match", 401);
-  }
+  // console.log({ projectObject, functionObject });
+  // console.log("HERE7");
+  // if (!projectObject?.apiKey || projectObject?.apiKey !== apiKey) {
+  //   console.log("HERE8");
+  //   error("ApiKey doesn't match", 401);
+  // }
 
   if (!functionObject) error("function not found");
 
@@ -141,7 +141,7 @@ function createDB(project) {
 async function handle({ params, locals, request }) {
   // get function from db
 
-  const apiKey = (await request.headers.get("ApiKey")) ?? "";
+  // const apiKey = (await request.headers.get("ApiKey")) ?? "";
   const project = locals.project;
   const name = params.name;
 
@@ -149,11 +149,11 @@ async function handle({ params, locals, request }) {
   try {
     if (!project) error("Project not found", 404);
 
-    if (!apiKey) error("You should set ApiKey header", 401);
+    // if (!apiKey) error("You should set ApiKey header", 401);
 
     // console.log("HERE3");
 
-    const { code, env } = await getFunction({ project, name, apiKey });
+    const { code, env } = await getFunction({ project, name });
     console.log("CODE", code);
 
     try {
