@@ -1,3 +1,4 @@
+import { VM } from "vm2";
 import db from "../../../lib/db";
 
 // import { VM } from "vm2";
@@ -13,48 +14,6 @@ import db from "../../../lib/db";
 //   update: (id: string, data: Data) => DataResult;
 //   get: (id: string) => DataResult;
 //   find: (filter: Data, options: {skip?: number, take?: number}) => DataResult[]
-// }
-
-// function DB(collection: string) : Collection {
-//   let _data: any[] = []
-//   return {
-//     insert(data) {
-//       const value = {value: data, id: crypto.randomUUID()}
-//       _data.push(value)
-//       return value
-//     },
-//     remove(id) {
-//       _data = _data.filter(data => data.id !== id)
-//       return true
-//     },
-//     update(id, data) {
-//       _data = _data.map(d => {
-//         if(d.id == id) return data;
-//         return d
-//       })
-//       return {id, value: data}
-//     },
-//     get(id) {
-//       return _data.find(data => data.id === id)
-//     },
-//     find(filter={}, options={}) {
-//       const take = options.take ?? -1
-//       const skip = options.skip ?? 0
-//       const result = _data.filter(data => {
-//         Object.entries(filter).map(([key, value]) => {
-//           if(data[key] !== value) {
-//             return false
-//           }
-//         })
-//         return true
-//       })
-//       if(take === -1) return result.slice(skip)
-//       if(take > result.length) return result.slice(skip);
-
-//       return result.slice(skip, skip + take)
-
-//     }
-//   }
 // }
 
 // async function handle({ request, params }: RequestEvent) {
@@ -105,6 +64,38 @@ import db from "../../../lib/db";
 //     // res.status(500).send("internal server error");
 //   }
 // }
+
+async function runJS(request, js, DB) {
+  const input = js + "\nhandle(__request);";
+
+  const vm = new VM({ timeout: 5000 });
+  vm.freeze(request, "__request");
+  vm.freeze(fetch, "fetch");
+  vm.freeze(Headers, "Headers");
+  vm.freeze(Response, "Response");
+  vm.freeze(DB, "DB");
+
+  const output = await vm.run(input);
+  console.log(output);
+
+  if (output instanceof Response) {
+    return output;
+  } else if (typeof output === "object") {
+    const headers = output.headers ?? {};
+    const status = output.status ?? 200;
+    const body = output.body;
+
+    const bodyInit = typeof body === "object" ? JSON.stringify(body) : body;
+
+    return new Response(bodyInit, {
+      status,
+      headers,
+    });
+  } else if (typeof output === "string" || typeof output === "number") {
+    return new Response(output.toString(), { status: 200 });
+  }
+}
+
 function error(message, status) {
   throw new Error(JSON.stringify({ message, status }));
 }
@@ -115,28 +106,92 @@ function respond(body, status) {
 
 async function getFunction({ project, name, apiKey }) {
   console.log("HERE6");
-  const projectObject = await db("projects")
-    .select("apiKey")
-    .where({ name: project })
-    .first();
+  const [projectObject, functionObject] = await Promise.all([
+    db("projects").select("apiKey").where({ name: project }).first(),
+    db("functions").select("code").where({ name, project }).first(),
+  ]);
+  console.log("HERE55");
 
   if (!projectObject) error("Project not found", 404);
 
+  console.log({ projectObject, apiKey, functionObject });
   console.log("HERE7");
-  if (!projectObject.apiKey || projectObject.apiKey !== apiKey)
+  if (!projectObject?.apiKey || projectObject?.apiKey !== apiKey) {
+    console.log("HERE8");
     error("ApiKey doesn't match", 401);
+  }
 
-  console.log("HERE8");
-  const result = await db("functions")
-    .select("code")
-    .where({ name, project })
-    .first();
+  if (!functionObject) error("function not found");
 
-  console.log("HERE9");
-  if (!result) error("function not found");
+  console.log("HERE 9");
+  return functionObject.code;
+}
 
-  console.log("HERE10");
-  return result.code;
+function createDB(project) {
+  return (collection) => {
+    // let _data = []
+    return {
+      insert(data) {
+        return db("rows").insert({
+          id: crypto.randomUUID(),
+          project,
+          collection,
+          data: JSON.stringify(data),
+        });
+
+        // const value = {value: data, id: crypto.randomUUID()}
+        // _data.push(value)
+        // return value
+      },
+      remove(id) {
+        return db("rows").delete().where({ project, collection, id });
+        // _data = _data.filter(data => data.id !== id)
+        // return true
+      },
+      update(id, data) {
+        return db("rows").update({ data }).where({ id, project, collection });
+        // _data = _data.map(d => {
+        //   if(d.id == id) return data;
+        //   return d
+        // })
+        // return {id, value: data}
+      },
+      async get(id) {
+        const result = await db("rows")
+          .select("data", "id")
+          .where({ project, collection, id })
+          .first();
+
+        return {
+          ...result.data,
+          id,
+        };
+        // return _data.find(data => data.id === id)
+      },
+      async find(filter = {}, options = {}) {
+        let result = await db("rows")
+          .select("data", "id")
+          .where({ project, options });
+        const take = options.take ?? -1;
+        const skip = options.skip ?? 0;
+
+        result = result
+          .map((res) => ({ ...res.data, id: res.id }))
+          .filter((data) => {
+            Object.entries(filter).map(([key, value]) => {
+              if (data[key] !== value) {
+                return false;
+              }
+            });
+            return true;
+          });
+        if (take === -1) return result.slice(skip);
+        if (take > result.length) return result.slice(skip);
+
+        return result.slice(skip, skip + take);
+      },
+    };
+  };
 }
 
 async function handle({ params, locals, request }) {
@@ -159,10 +214,11 @@ async function handle({ params, locals, request }) {
 
     // console.log("HERE3");
     const code = await getFunction({ project, name, apiKey });
+    console.log("CODE", code);
 
-    // console.log("HERE4");
-    // console.log(code);
-    return new Response(code);
+    const result = await runJS(request, code, createDB(project));
+    console.log(result);
+    return result;
   } catch (err) {
     // console.log("HERE5");
     // console.log(err);
