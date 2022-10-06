@@ -196,7 +196,7 @@ function createDB(project) {
 
 async function handle({ params, locals, request }) {
   // get function from db
-  // run with Request
+
   const apiKey = (await request.headers.get("ApiKey")) ?? "";
   const project = locals.project;
   const name = params.name;
