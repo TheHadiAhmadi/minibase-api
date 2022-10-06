@@ -1,23 +1,17 @@
 {
-  "name": "minibase-app",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/TheHadiAhmadi/minibase-app.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/TheHadiAhmadi/minibase-app/issues"
-  },
-  "homepage": "https://github.com/TheHadiAhmadi/minibase-app#readme",
-  "dependencies": {
-    "polka": "^0.5.2"
-  }
+	"name": "minibase-app",
+	"version": "0.0.1",
+	"private": true,
+	"scripts": {
+		"dev": "vite dev",
+		"build": "vite build",
+		"preview": "vite preview"
+	},
+	"devDependencies": {
+		"@sveltejs/adapter-auto": "next",
+		"@sveltejs/kit": "next",
+		"svelte": "^3.44.0",
+		"vite": "^3.1.0"
+	},
+	"type": "module"
 }
