@@ -5,7 +5,7 @@ const db = knex({
   useNullAsDefault: true,
   client: "pg",
   connection: DATABASE_URI,
-  debug: true,
+  // debug: true,
 });
 
 export default db;
