@@ -51,7 +51,7 @@ async function getFunction({ project, name }) {
     db("projects").select("*").where({ name: project }).first(),
     db("functions").select("code").where({ name, project }).first(),
   ]);
-  // console.log("HERE55");
+  console.log("HERE55");
 
   if (!projectObject) error("Project not found", 404);
 
@@ -75,14 +75,15 @@ function createDB(project) {
   return (collection) => {
     // let _data = []
     return {
-      insert(data) {
-        return db("rows").insert({
-          id: crypto.randomUUID(),
+      async insert(data) {
+        const id = crypto.randomUUID();
+        await db("rows").insert({
+          id,
           project,
           collection,
           data: JSON.stringify(data),
         });
-
+        return { ...data, id };
         // const value = {value: data, id: crypto.randomUUID()}
         // _data.push(value)
         // return value
