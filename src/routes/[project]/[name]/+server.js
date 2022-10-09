@@ -1,8 +1,8 @@
-import { handle } from "../../lib/handler";
+import { handle } from "../../../lib/handler";
 
-async function handleRequest({ params, locals, request }) {
+async function handleRequest({ params, request }) {
   return handle({
-    project: locals.project,
+    project: params.project,
     name: params.name,
     request,
   });

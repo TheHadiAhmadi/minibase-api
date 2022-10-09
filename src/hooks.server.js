@@ -3,14 +3,15 @@ export async function handle({ event, resolve }) {
 
   let project = null;
 
-  const segments = url.hostname.split(".");
-  if (segments.length == 1 && segments[0] == "localhost") {
-    project = url.searchParams.get("project");
+  // subdomain
+  const splitted = url.hostname.split(".");
+
+  if (splitted.length > 2) {
+    project = splitted[0];
   }
 
-  if (segments.length > 2) {
-    project = segments[0];
-  }
+  // query parameter
+  if (!project) project = url.searchParams.get("project");
 
   event.locals.project = project;
   return await resolve(event);
