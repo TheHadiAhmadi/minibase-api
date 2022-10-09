@@ -5,7 +5,8 @@
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build",
-		"preview": "vite preview"
+		"preview": "vite preview",
+		"start": "node build"
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-auto": "next",
@@ -15,6 +16,7 @@
 	},
 	"type": "module",
 	"dependencies": {
+		"@sveltejs/adapter-node": "^1.0.0-next.96",
 		"knex": "^2.3.0",
 		"pg": "^8.8.0",
 		"vm2": "^3.9.11"
