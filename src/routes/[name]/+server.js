@@ -79,7 +79,7 @@ async function getFunction({ project, name }) {
   if (!functionObject) error("function not found");
   return {
     code: functionObject.code,
-    env: projectObject.env ?? { TODO: "true" },
+    env: projectObject.env,
     collectionsList,
   };
 }
