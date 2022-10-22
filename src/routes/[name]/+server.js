@@ -1,11 +1,14 @@
 import { handle } from "../../lib/handler";
 
 async function handleRequest({ params, locals, request }) {
-  return handle({
+  console.time("handleRequest");
+  const result = await handle({
     project: locals.project,
     name: params.name,
     request,
   });
+  console.timeEnd("handleRequest");
+  return result;
 }
 
 export { handleRequest as GET };

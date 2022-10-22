@@ -4,7 +4,9 @@ import { respond } from "./utils";
 import { runJS } from "./vm";
 
 export async function handle({ project, name, request }) {
+  console.time('handle')
   try {
+    console.log('handle', {project, name})
     if (!project) error("Project not found", 404);
 
     const { code, env, collectionsList } = await getRequiredData({
@@ -17,12 +19,12 @@ export async function handle({ project, name, request }) {
       return prev;
     }, {});
 
-    console.log("BEFORE RUNJS");
     const response = await runJS(request, code, env, collections);
-    console.log("AFTER RUNJS");
+    console.timeEnd('handle')
     return response;
   } catch (err) {
     const er = JSON.parse(err.message);
+    console.timeEnd('handle')
     return respond({ message: er.message, status: er.status }, er.status);
   }
 }

@@ -2,6 +2,7 @@ import { VM } from "vm2";
 import { error } from "./utils";
 
 export async function runJS(request, js = "", env = {}, db = {}, utils = {}) {
+  console.time("runJS");
   try {
     const input = `
     
@@ -32,11 +33,12 @@ export async function runJS(request, js = "", env = {}, db = {}, utils = {}) {
     vm.freeze(Response, "Response");
     vm.freeze({ env, db, utils }, "project");
 
-    const output = await vm.run(input).catch((err) => {
-      throw err;
-    });
+    console.log("running user code");
+    const output = await vm.run(input);
+    console.log("finish user code");
 
     if (output instanceof Response) {
+      console.timeEnd("runJS");
       return output;
     } else {
       if (typeof output === "object") {
@@ -46,20 +48,25 @@ export async function runJS(request, js = "", env = {}, db = {}, utils = {}) {
 
         const bodyInit = typeof body === "object" ? JSON.stringify(body) : body;
 
+        console.timeEnd("runJS");
         return new Response(bodyInit, {
           status,
           headers,
         });
       } else if (typeof output === "string" || typeof output === "number") {
+        console.timeEnd("runJS");
         return new Response(output.toString(), { status: 200 });
       } else {
         console.log("no return");
+        console.timeEnd("runJS");
         return new Response();
       }
     }
   } catch (err) {
+    console.log("finish user code with error");
     const codeline = err.stack.split(":")[1].split("\n")[0];
     console.log(codeline);
+    console.timeEnd("runJS");
     error("js:" + codeline + " - " + err.message, 500, err.stack);
   }
 }
