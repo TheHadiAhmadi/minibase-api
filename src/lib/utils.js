@@ -1,5 +1,5 @@
-export function error(message, status) {
-  throw new Error(JSON.stringify({ message, status }));
+export function error(message, status, stack = "") {
+  throw new Error(JSON.stringify({ message, status, stack }));
 }
 
 export function respond(body, status) {

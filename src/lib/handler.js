@@ -17,13 +17,11 @@ export async function handle({ project, name, request }) {
       return prev;
     }, {});
 
-    try {
-      return runJS(request, code, env, collections);
-    } catch (err) {
-      error("JS Error: " + err.message, 400);
-    }
+    console.log("BEFORE RUNJS");
+    const response = await runJS(request, code, env, collections);
+    console.log("AFTER RUNJS");
+    return response;
   } catch (err) {
-    console.log(err);
     const er = JSON.parse(err.message);
     return respond({ message: er.message, status: er.status }, er.status);
   }
