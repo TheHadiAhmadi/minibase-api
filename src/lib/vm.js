@@ -1,13 +1,13 @@
 import { VM } from "vm2";
 import { error } from "./utils";
+import * as jsonwebtoken from "jsonwebtoken";
+
 
 export async function runJS(request, js = "", env = {}, db = {}, utils = {}) {
   console.time("runJS");
-  try {
+try {
     const input = `
-    
     exports = {}
-
     ${js};
 
     try {
@@ -32,6 +32,7 @@ export async function runJS(request, js = "", env = {}, db = {}, utils = {}) {
     vm.freeze(crypto, "crypto");
     vm.freeze(Response, "Response");
     vm.freeze({ env, db, utils }, "project");
+    vm.freeze(jsonwebtoken, "jsonwebtoken");
 
     console.log("running user code");
     const output = await vm.run(input);
