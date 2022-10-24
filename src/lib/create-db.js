@@ -56,12 +56,13 @@ export function createDB(project, collection) {
       result = result
         .map((res) => ({ ...res.data, id: res.id }))
         .filter((data) => {
+          let returnVal = true;
           Object.entries(filter).map(([key, value]) => {
             if (data[key] !== value) {
-              return false;
+              returnVal = false;
             }
           });
-          return true;
+          return returnVal;
         });
       if (take === -1) return result.slice(skip);
       if (take > result.length) return result.slice(skip);
