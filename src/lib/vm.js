@@ -23,21 +23,20 @@ export async function runJS(request, js = "", env = {}, db = {}, utils = {}) {
     })
   `;
 
-
     const vm = new VM({ timeout: 2000 });
 
     const body = await request.json();
 
     const ctx = {
-      token: (request.headers.get('Authorization') ?? '')[1] ?? '',
+      token: (request.headers.get("Authorization") ?? "").split(" ")[1] ?? "",
       url: request.url,
       db,
       env,
       utils,
       packages: {
-        jsonwebtoken: jsonwebtoken.default
-      }
-    }
+        jsonwebtoken: jsonwebtoken.default,
+      },
+    };
 
     // vm.freeze(request, "__request");
     vm.freeze(fetch, "fetch");
@@ -46,7 +45,7 @@ export async function runJS(request, js = "", env = {}, db = {}, utils = {}) {
     vm.freeze(crypto, "crypto");
     vm.freeze(Response, "Response");
     vm.freeze(body, "body");
-    vm.freeze(ctx, "ctx")
+    vm.freeze(ctx, "ctx");
 
     const output = await vm.run(input);
 
