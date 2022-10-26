@@ -2,66 +2,58 @@ import { VM } from "vm2";
 import { error } from "./utils";
 import * as jsonwebtoken from "jsonwebtoken";
 
-
 export async function runJS(request, js = "", env = {}, db = {}, utils = {}) {
   console.time("runJS");
-try {
+  try {
     const input = `
-    exports = {}
+    let exports = () => ({
+      error: {
+        message: 'Function not found', 
+        code: 'NOT_FOUND'
+      }
+    })
+
     ${js};
 
-    try {
-      const method = __request.method
-      if(exports[method]) {
-        exports[method](__request)
-      } else {
-        new Response("Method not allowed", {status: 405})
-      }
-    } catch(err){
+      exports(body, ctx).then(result => {
+        return new Response(JSON.stringify(result), {status: 200})
+      }).catch(err => {
       console.log(err)
-      new Response("Error while running code: " + err.message, {status: 500})
-    }
+      return new Response("Error while running code: " + err.message, {status: 500})
+    })
   `;
+
 
     const vm = new VM({ timeout: 2000 });
 
-    vm.freeze(request, "__request");
+    const body = await request.json();
+
+    const ctx = {
+      token: (request.headers.get('Authorization') ?? '')[1] ?? '',
+      url: request.url,
+      db,
+      env,
+      utils,
+      packages: {
+        jsonwebtoken: jsonwebtoken.default
+      }
+    }
+
+    // vm.freeze(request, "__request");
     vm.freeze(fetch, "fetch");
     vm.freeze(Headers, "Headers");
     vm.freeze(URL, "URL");
     vm.freeze(crypto, "crypto");
     vm.freeze(Response, "Response");
-    vm.freeze({ env, db, utils }, "project");
-    vm.freeze(jsonwebtoken, "jsonwebtoken");
+    vm.freeze(body, "body");
+    vm.freeze(ctx, "ctx")
 
-    console.log("running user code");
     const output = await vm.run(input);
-    console.log("finish user code");
 
+    console.log(output);
     if (output instanceof Response) {
       console.timeEnd("runJS");
       return output;
-    } else {
-      if (typeof output === "object") {
-        const headers = output.headers ?? {};
-        const status = output.status ?? 200;
-        const body = output.body;
-
-        const bodyInit = typeof body === "object" ? JSON.stringify(body) : body;
-
-        console.timeEnd("runJS");
-        return new Response(bodyInit, {
-          status,
-          headers,
-        });
-      } else if (typeof output === "string" || typeof output === "number") {
-        console.timeEnd("runJS");
-        return new Response(output.toString(), { status: 200 });
-      } else {
-        console.log("no return");
-        console.timeEnd("runJS");
-        return new Response();
-      }
     }
   } catch (err) {
     console.log("finish user code with error");
