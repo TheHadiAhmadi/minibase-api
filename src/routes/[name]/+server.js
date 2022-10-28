@@ -1,7 +1,11 @@
+import { functionsList } from "../../lib/get-data";
 import { handle } from "../../lib/handler";
 
 async function handleRequest({ params, locals, request }) {
-  console.time("handleRequest");
+  if (request.method === "GET") {
+    return functionsList(params.name);
+  }
+
   const result = await handle({
     project: locals.project,
     name: params.name,

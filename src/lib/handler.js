@@ -1,4 +1,5 @@
 import { createDB } from "./create-db";
+import db from "./db";
 import { getRequiredData } from "./get-data";
 import { respond } from "./utils";
 import { runJS } from "./vm";
@@ -6,7 +7,7 @@ import { runJS } from "./vm";
 export async function handle({ project, name, request }) {
   if (request.method !== "POST")
     return respond({
-      message: "Method is Not supported, Only POST method is allowed",
+      message: "Method is Not supported, Only GET and POST methods are allowed",
     });
 
   console.time("handle");
