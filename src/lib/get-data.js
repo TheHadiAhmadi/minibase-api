@@ -33,7 +33,7 @@ async function projectsList() {
 }
 
 let functionTemplate = `/* DO NOT EDIT MANUALLY, 
-THIS FILE IS AVAILABLE AT https://%%name1%%.theminibase.com */  
+THIS FILE IS AVAILABLE AT https://%%name1%%.theminibase.com/mod.js */  
 
 const minibase = (appName) => {
   let token = "";
