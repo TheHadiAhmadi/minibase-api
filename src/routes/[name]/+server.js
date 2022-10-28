@@ -2,7 +2,7 @@ import { functionsList } from "../../lib/get-data";
 import { handle } from "../../lib/handler";
 
 async function handleRequest({ params, locals, request }) {
-  if (request.method === "GET") {
+  if (!locals.project && request.method === "GET") {
     return functionsList(params.name);
   }
 
