@@ -33,7 +33,7 @@ async function projectsList() {
 }
 
 let functionTemplate = `/* DO NOT EDIT MANUALLY, 
-THIS FILE IS AVAILABLE AT https://%%name1%%.theminibase.com/mod.js */  
+THIS FILE IS AVAILABLE AT https://%%name%%.theminibase.com/%%file%%.js */  
 
 const minibase = (appName) => {
   let token = "";
@@ -52,7 +52,10 @@ const minibase = (appName) => {
       const res = await fetch(baseUrl + functionName, opts);
       const result = await res.json();
 
-      if (result.error) throw new Error(result.error);
+      if (result.error) {
+          console.log(result.error)
+          throw new Error(result.error.message);
+      }
 
       return result.data;
   }
@@ -64,14 +67,13 @@ const minibase = (appName) => {
       getToken() {
           return token;
       },
-%%functions%%
+      %%functions%%
   };
 };
 
 `;
 
 export async function functionsList(project, type = "module") {
-  console.log({ project });
   if (!project) {
     return projectsList();
   }
@@ -79,14 +81,12 @@ export async function functionsList(project, type = "module") {
   const fns = await db.select("name").from("functions").where({ project });
 
   const functions = fns
-    .map((fn) => `      ${fn.name}: (data) => run("${fn.name}", data)`)
-    .join(",\n");
-
-  console.log(functions);
+    .map((fn) => `${fn.name}: (data) => run("${fn.name}", data)`)
+    .join(",\n      ");
 
   let result = functionTemplate.replace("%%functions%%", functions);
-  result = result.replace("%%name1%%", project);
-  result = result.replace("%%name2%%", project);
+  result = result.replace("%%name%%", project);
+  result = result.replace("%%file%%", type === "module" ? "mod" : "cdn");
 
   if (type === "module") {
     result += `\nexport default minibase("${project}");`;
