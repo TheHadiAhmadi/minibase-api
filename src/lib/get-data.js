@@ -68,10 +68,9 @@ const minibase = (appName) => {
   };
 };
 
-export default minibase("%%name2%%");
 `;
 
-export async function functionsList(project) {
+export async function functionsList(project, type = "module") {
   console.log({ project });
   if (!project) {
     return projectsList();
@@ -88,6 +87,12 @@ export async function functionsList(project) {
   let result = functionTemplate.replace("%%functions%%", functions);
   result = result.replace("%%name1%%", project);
   result = result.replace("%%name2%%", project);
+
+  if (type === "module") {
+    result += `\nexport default minibase("${project}");`;
+  } else {
+    result = `(${result}\nif(window){window.minibase=minibase})()`
+  }
 
   return new Response(result, {
     headers: { "Content-Type": "text/plain" },
