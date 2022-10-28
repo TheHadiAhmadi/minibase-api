@@ -91,7 +91,7 @@ export async function functionsList(project, type = "module") {
   if (type === "module") {
     result += `\nexport default minibase("${project}");`;
   } else {
-    result = `(${result}\nif(window){window.minibase=minibase})()`
+    result = `(function() {\n${result}\nif(window){window.${project}=minibase("${project}")}})()`;
   }
 
   return new Response(result, {

@@ -1,5 +1,5 @@
-import { functionsList } from "../../lib/get-data";
+import { functionsList } from "../../../lib/get-data";
 
-export async function GET({ locals }) {
-  return functionsList(locals.project, "cdn");
+export async function GET({ params }) {
+  return functionsList(params.name, "cdn");
 }
