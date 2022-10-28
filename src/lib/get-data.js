@@ -15,7 +15,7 @@ export async function getRequiredData({ project, name }) {
   console.timeEnd("getRequiredData");
   return {
     code: functionObject.code,
-    env: projectObject.env,
+    env: JSON.parse(projectObject.env),
     collectionsList: collectionsList.map((data) => data.name),
   };
 }
