@@ -42,7 +42,7 @@ export function createDB(project, collection) {
       if (!result) return null;
       console.time("JS: get");
 
-      return { ...result.data, id: result.id };
+      return { ...JSON.parse(result.data), id: result.id };
     },
     async find(filter = {}, options = {}) {
       console.log("JS: find");
@@ -54,7 +54,7 @@ export function createDB(project, collection) {
       const skip = options.skip ?? 0;
 
       result = result
-        .map((res) => ({ ...res.data, id: res.id }))
+        .map((res) => ({ ...JSON.parse(res.data), id: res.id }))
         .filter((data) => {
           let returnVal = true;
           Object.entries(filter).map(([key, value]) => {
