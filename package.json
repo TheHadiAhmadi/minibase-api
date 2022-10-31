@@ -17,8 +17,7 @@
 	"dependencies": {
 		"jsonwebtoken": "^8.5.1",
 		"knex": "^2.3.0",
-		"mysql": "^2.18.1",
-		"pg": "^8.8.0",
+		"sqlite3": "^5.1.2",
 		"vm2": "^3.9.11"
 	}
 }
