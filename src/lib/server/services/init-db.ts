@@ -1,8 +1,8 @@
 import db from "$lib/server/db";
 
 export async function initDB() {
-  const hasProjectsTable = await db.schema.hasTable("projects");
-  if (hasProjectsTable) return;
+  // const hasProjectsTable = await db.schema.hasTable("projects");
+  // if (hasProjectsTable) return;
 
   // create projects table
   await db.schema.createTable("projects", (builder) => {
