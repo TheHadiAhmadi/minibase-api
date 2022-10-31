@@ -23,14 +23,14 @@ export async function initDB() {
     builder.string("id").notNullable().primary();
     builder.string("project").notNullable();
     builder.string("name").notNullable();
-    builder.text("schema").notNullable().defaultTo([]);
+    builder.text("schema").notNullable().defaultTo("[]");
   });
 
   await db.schema.createTable("rows", (builder) => {
     builder.string("id").notNullable().primary();
     builder.string("project").notNullable();
     builder.string("collection").notNullable();
-    builder.text("data").notNullable().defaultTo({});
+    builder.text("data").notNullable().defaultTo("{}");
   });
 
   await db.schema.createTable("keys", (builder) => {
