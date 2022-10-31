@@ -14,21 +14,26 @@ export async function handle({ event, resolve }) {
     return response;
   }
 
-  const url = new URL(event.request.url);
+  console.log("HEADERS",event.request.headers);
+  const apiKey = event.request.headers.get("ApiKey") ?? "";
+  event.locals.apiKey = apiKey;
+  // GET APIKEY from ApiKey Header
 
-  let project = null;
+  // const url = new URL(event.request.url);
+
+  // let project = null;
 
   // subdomain
-  const splitted = url.hostname.split(".");
+  // const splitted = url.hostname.split(".");
 
-  if (splitted.length > 2) {
-    project = splitted[0];
-  }
+  // if (splitted.length > 2) {
+  //   project = splitted[0];
+  // }
 
   // query parameter
-  if (!project) project = url.searchParams.get("project");
+  // if (!project) project = url.searchParams.get("project");
 
-  event.locals.project = project;
+  // event.locals.project = project;
 
   /** @type {Response} */
   const response = await resolve(event);
