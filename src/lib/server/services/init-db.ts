@@ -8,7 +8,7 @@ export async function initDB() {
   await db.schema.createTable("projects", (builder) => {
     builder.string("id").notNullable().primary();
     builder.string("name").notNullable().unique();
-    builder.text("env").notNullable().defaultTo({});
+    builder.text("env").notNullable().defaultTo("{}");
   });
 
   await db.schema.createTable("functions", (builder) => {
