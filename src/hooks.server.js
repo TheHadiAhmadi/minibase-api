@@ -7,14 +7,14 @@ export async function handle({ event, resolve }) {
     response.headers.set("Access-Control-Allow-Methods", "*");
     response.headers.set(
       "Access-Control-Allow-Headers",
-      "Authorization,Content-Type"
+      "Authorization,Content-Type,ApiKey"
     );
     response.headers.set("Cross-Origin-Resource-Policy", "cross-origin");
 
     return response;
   }
 
-  console.log("HEADERS",event.request.headers);
+  console.log("HEADERS", event.request.headers);
   const apiKey = event.request.headers.get("ApiKey") ?? "";
   event.locals.apiKey = apiKey;
   // GET APIKEY from ApiKey Header
@@ -42,7 +42,7 @@ export async function handle({ event, resolve }) {
   response.headers.set("Access-Control-Allow-Methods", "*");
   response.headers.set(
     "Access-Control-Allow-Headers",
-    "Authorization,content-type"
+    "Authorization,content-type,ApiKey"
   );
   response.headers.set("Cross-Origin-Resource-Policy", "cross-origin");
 
