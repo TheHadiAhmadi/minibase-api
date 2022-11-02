@@ -31,9 +31,12 @@ async function projectsList() {
     headers: { "Content-Type": "text/html" },
   });
 }
+import type { ProjectFunction } from "$lib/types";
+
+import { getFunctions } from "$lib/server/services";
 
 let functionTemplate = `/* DO NOT EDIT MANUALLY, 
-THIS FILE IS AVAILABLE AT https://cloud-3.domcloud.io/%%name%%/%%file%%.js */  
+THIS FILE IS AVAILABLE AT https://theminibase.com/%%name%%/%%file%%.js */  
 
 const minibase = (appName) => {
   let token = "";
@@ -73,18 +76,16 @@ const minibase = (appName) => {
 
 `;
 
-export async function functionsList(
+export async function getClientSideCode(
   project: string,
   type: "module" | "cdn" = "module"
 ) {
-  if (!project) {
-    return projectsList();
-  }
-
-  const fns = await db.select("name").from("functions").where({ project });
+  const fns = await getFunctions({ project });
 
   const functions = fns
-    .map((fn) => `${fn.name}: (data) => run("${fn.name}", data)`)
+    .map(
+      (fn: ProjectFunction) => `${fn.name}: (data) => run("${fn.name}", data)`
+    )
     .join(",\n      ");
 
   let result = functionTemplate.replace("%%functions%%", functions);
@@ -94,10 +95,7 @@ export async function functionsList(
   if (type === "module") {
     result += `\nexport default minibase("${project}");`;
   } else {
-    result = `(function() {\n${result}\nif(window){window.${project}=minibase("${project}")}})()`;
+    result = `(function() {\n${result}\nif(window){window['${project}']=minibase("${project}")}})()`;
   }
-
-  return new Response(result, {
-    headers: { "Content-Type": "text/plain" },
-  });
+  return result;
 }
