@@ -48,6 +48,7 @@ export async function runJS(
     vm.freeze(fetch, "fetch");
     vm.freeze(Headers, "Headers");
     vm.freeze(URL, "URL");
+    vm.freeze(FormData, "FormData");
     vm.freeze(crypto, "crypto");
     vm.freeze(Response, "Response");
     vm.freeze(body, "body");
