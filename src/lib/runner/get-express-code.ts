@@ -1,4 +1,4 @@
-import type { ProjectCollection, ProjectFunction } from "$lib/types"
+import type { ProjectCollection, ProjectFunction } from "$lib/types";
 
 let getFunction = (name, code) => `
 app.post("/${name}", async (req, res) => {
@@ -9,11 +9,14 @@ app.post("/${name}", async (req, res) => {
   const result = await handle(req.body, ctx);
   return res.json(result);
 });
-`
+`;
 
-let getCode = (tables: string, functions: string) => `import express from "express";
-import knex from "knex";
-import crypto from 'crypto'
+let getCode = (
+  tables: string,
+  functions: string
+) => `const express = require("express");
+const knex = require("knex");
+const crypto = require('crypto');
 
 const app = express();
 app.use(express.json());
@@ -113,12 +116,17 @@ init().then(() => {
     console.log("server started at port " + port + "!");
   });
 });
-`
+`;
 
-export function getExpressCode(collections: ProjectCollection[], functions: ProjectFunction[]) {
-    const functionsStr = functions.map((fn) => getFunction(fn.name, fn.code)).join('\n\n')
+export function getExpressCode(
+  collections: ProjectCollection[],
+  functions: ProjectFunction[]
+) {
+  const functionsStr = functions
+    .map((fn) => getFunction(fn.name, fn.code))
+    .join("\n\n");
 
-    const collectionsStr = JSON.stringify(collections)
+  const collectionsStr = JSON.stringify(collections);
 
-    return getCode(collectionsStr, functionsStr)
+  return getCode(collectionsStr, functionsStr);
 }
