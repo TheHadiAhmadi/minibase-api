@@ -6,7 +6,11 @@ app.post("/${name}", async (req, res) => {
 
   ${code}
 
-  const result = await handle(req.body, ctx);
+
+  const authorizationHeader = req.headers['authorization']
+  const token = authorizationHeader ? authorizationHeader.split(' ')[1] : ""
+
+  const result = await handle(req.body, {...ctx, token });
   return res.json(result);
 });
 `;
@@ -106,6 +110,9 @@ async function init() {
 
   ctx = {
     db,
+    packages: {
+    //    jsonwebtoken: require('jsonwebtoken')
+    },
     env: process.env,
   };
 }
