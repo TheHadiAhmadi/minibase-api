@@ -80,7 +80,7 @@ async function createDB(collection, schema) {
       return result;
     },
     async find(filter = {}, options = {}) {
-      let result = await db(collection).select("*").where();
+      let result = await db(collection).select("*");
       const take = options.take ?? -1;
       const skip = options.skip ?? 0;
 
