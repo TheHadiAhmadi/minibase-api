@@ -17,9 +17,11 @@ let getCode = (
 ) => `const express = require("express");
 const knex = require("knex");
 const crypto = require('crypto');
+const cors = require('cors')
 
 const app = express();
 app.use(express.json());
+app.use(cors());
 
 let ctx = {}
 
@@ -116,6 +118,8 @@ init().then(() => {
     console.log("server started at port " + port + "!");
   });
 });
+
+module.exports = app
 `;
 
 export function getExpressCode(
