@@ -1,6 +1,7 @@
 import { VM } from "vm2";
 import { error } from "./utils";
 import * as jsonwebtoken from "jsonwebtoken";
+import * as bcrypt from 'bcrypt'
 
 export async function runJS(
   request: Request,
@@ -41,6 +42,7 @@ export async function runJS(
       utils,
       packages: {
         jsonwebtoken: jsonwebtoken.default,
+        bcrypt
       },
     };
 
