@@ -55,7 +55,7 @@ export function createDB(project: string, collection: string) {
         .where({ project, collection });
 
       function applyFilter(rows: CollectionRow[]) {
-        for (const filter of filters) {
+        for (const filter of filters ?? []) {
           rows = rows.filter((row) => {
             if (
               filter.type === "like" &&
