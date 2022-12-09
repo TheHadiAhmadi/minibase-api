@@ -42,7 +42,7 @@ const minibase = (appName) => {
   let token = "";
 
   async function run(functionName, data = {}) {
-      const baseUrl = "https://cloud-3.domcloud.io/" + appName + '/';
+      const baseUrl = "https://minibase-api.onrender.com/" + appName + '/';
       const opts = {
           method: "POST",
           headers: {
