@@ -45,9 +45,16 @@ async function createDB(collection, schema) {
   if (!hasExists) {
     await db.schema.createTable(collection, (builder) => {
       for (let item of schema) {
-        // TODO: support all available types
         if (item.type === "string") {
-          builder.string(item.name);
+          builder.text(item.name);
+        } else if (item.type === "number") {
+          builder.double(item.name);
+        } else if (item.type === "boolean") {
+          builder.boolean(item.name);
+        } else if (item.type === "uuid") {
+          builder.uuid(item.name);
+        } else {
+          builder.text(item.name);
         }
       }
     });
@@ -79,24 +86,61 @@ async function createDB(collection, schema) {
 
       return result;
     },
-    async find(filter = {}, options = {}) {
-      let result = await db(collection).select("*");
-      const take = options.take ?? -1;
-      const skip = options.skip ?? 0;
+    async filter({ perPage, page, sort, filters } = {}) {
+      perPage = perPage || 10;
+      page = page || 1;
 
-      result = result.filter((data) => {
-        let returnVal = true;
-        Object.entries(filter).map(([key, value]) => {
-          if (data[key] !== value) {
-            returnVal = false;
+      if (page < 1) page = 1;
+      var offset = (page - 1) * perPage;
+
+      function applyFilter(q) {
+        if (!filters) return q;
+        for (const filter of filters) {
+          if (filter.type === "like") {
+            q = q.whereLike(filter.column, '%' + value + '%');
+          } else if (filter.type === "in") {
+            q = q.whereIn(filter.column, value);
+          } else if (filter.type === "between") {
+            q = q.whereBetween(filter.column, value);
+          } else {
+            q = q.where(filter.column, "=", value);
           }
-        });
-        return returnVal;
-      });
-      if (take === -1) return result.slice(skip);
-      if (take > result.length) return result.slice(skip);
+        }
 
-      return result.slice(skip, skip + take);
+        return q;
+      }
+
+      function applyPagination(q) {
+        if (!offset && !perPage) return q;
+        return q.offset(offset).limit(perPage);
+      }
+
+      function applySort(q) {
+        if (!sort) return q;
+        return q.orderBy(sort);
+      }
+
+      const countQuery = db(collection).count("* as count").first();
+
+      let dataQuery = db(collection).select("*");
+
+      dataQuery = applyFilter(dataQuery);
+      dataQuery = applyPagination(dataQuery);
+      dataQuery = applySort(dataQuery);
+      // .offset(offset).limit(perPage).orderBy(sort)
+
+      return Promise.all([countQuery, dataQuery]).then(([count, data]) => {
+        var total = count.count;
+        var lastPage = Math.ceil(total / perPage);
+
+        return {
+          data,
+          perPage,
+          page,
+          total,
+          lastPage,
+        };
+      });
     },
   };
 }

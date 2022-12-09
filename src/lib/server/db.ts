@@ -1,10 +1,11 @@
+import { DATABASE_URI } from "$env/static/private";
 import knex from "knex";
 
 
 const db = knex({
   useNullAsDefault: true,
-  client: "sqlite",
-  connection: "./minibase.db",
+  client: "pg",
+  connection: DATABASE_URI,
   debug: true,
 });
 
