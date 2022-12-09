@@ -55,6 +55,7 @@ export function createDB(project: string, collection: string) {
         .where({ project, collection });
 
       function applyFilter(rows: CollectionRow[]) {
+        if (!filters || filters.length === 0) return rows;
         for (const filter of filters ?? []) {
           rows = rows.filter((row) => {
             if (
@@ -78,6 +79,7 @@ export function createDB(project: string, collection: string) {
       }
 
       function applySort(rows: CollectionRow[]) {
+        if (!sort) return rows;
         return rows.sort((a, b) => {
           const column = sort.column;
           const order = sort.order;
@@ -89,9 +91,16 @@ export function createDB(project: string, collection: string) {
         });
       }
       function applyPagination(rows: CollectionRow[]) {
+        if (!page) page = 1;
+        if (!perPage) perPage = 10;
         const offset = (page - 1) * perPage;
 
-        let data = rows.slice(offset, offset + perPage);
+        let data;
+        if (perPage !== 0) {
+          data = rows.slice(offset, offset + perPage);
+        } else {
+          data = rows.slice(offset);
+        }
 
         return {
           data,
