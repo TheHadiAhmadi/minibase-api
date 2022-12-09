@@ -20,6 +20,7 @@
 		"bcrypt": "^5.1.0",
 		"jsonwebtoken": "^8.5.1",
 		"knex": "^2.3.0",
+		"pg": "^8.8.0",
 		"sqlite3": "^5.1.2",
 		"svelte-check": "^2.9.2",
 		"svelte-preprocess": "^4.10.7",
