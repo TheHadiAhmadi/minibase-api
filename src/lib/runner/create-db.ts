@@ -47,7 +47,7 @@ export function createDB(project: string, collection: string) {
 
       return { ...JSON.parse(result.data), id: result.id };
     },
-    async find({ filters, sort, page, perPage } = {}) {
+    async filter({ filters, sort, page, perPage } = {}) {
       console.log("JS: find");
       console.time("JS: find");
       let allRows = await db("rows")
