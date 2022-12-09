@@ -1,4 +1,5 @@
 import db from "$lib/server/db";
+import type { CollectionRow } from "$lib/types";
 
 export function createDB(project: string, collection: string) {
   return {
@@ -26,7 +27,9 @@ export function createDB(project: string, collection: string) {
     },
     async update(id: string, data: any) {
       console.time("JS: update");
-      await db("rows").update({ data: JSON.stringify(data) }).where({ id, project, collection });
+      await db("rows")
+        .update({ data: JSON.stringify(data) })
+        .where({ id, project, collection });
       console.timeEnd("JS: update");
       return { ...data, id };
     },
@@ -44,32 +47,62 @@ export function createDB(project: string, collection: string) {
 
       return { ...JSON.parse(result.data), id: result.id };
     },
-    async find(filter: any = {}, options: any = {}) {
+    async find({ filters, sort, page, perPage } = {}) {
       console.log("JS: find");
       console.time("JS: find");
-      let result = await db("rows")
+      let allRows = await db("rows")
         .select("data", "id")
         .where({ project, collection });
-      const take = options.take ?? -1;
-      const skip = options.skip ?? 0;
 
-      result = result
-        .map((res) => ({ ...JSON.parse(res.data), id: res.id }))
-        .filter((data) => {
-          let returnVal = true;
-          Object.entries(filter).map(([key, value]) => {
-            if (data[key] !== value) {
-              returnVal = false;
+      function applyFilter(rows: CollectionRow[]) {
+        for (const filter of filters) {
+          rows = rows.filter((row) => {
+            if (
+              filter.type === "like" &&
+              typeof row[filter.column] === "string"
+            ) {
+              return (row[filter.column] as string).includes(filter.value);
+            } else if (filter.type === "equal") {
+              return row[filter.column] === filter.value;
+            } else if (filter.type === "in") {
+              return filter.value.includes(row[filter.column]);
+            } else if (filter.type === "between") {
+              return (
+                row[filter.column] >= filter.value[0] &&
+                row[filter.column] <= filter.value[1]
+              );
             }
           });
-          return returnVal;
+        }
+        return rows;
+      }
+
+      function applySort(rows: CollectionRow[]) {
+        return rows.sort((a, b) => {
+          const column = sort.column;
+          const order = sort.order;
+          let multiplier = 1;
+
+          if (order === "asc") multiplier = -1;
+
+          return multiplier * (a[column] > b[column] ? 1 : -1);
         });
-      if (take === -1) return result.slice(skip);
-      if (take > result.length) return result.slice(skip);
+      }
+      function applyPagination(rows: CollectionRow[]) {
+        const offset = (page - 1) * perPage;
 
-      console.timeEnd("JS: find");
+        let data = rows.slice(offset, offset + perPage);
 
-      return result.slice(skip, skip + take);
+        return {
+          data,
+          perPage,
+          page,
+          total: allRows.length,
+          lastPage: Math.ceil(allRows.length / perPage),
+        };
+      }
+
+      return applyPagination(applySort(applyFilter(allRows)));
     },
   };
 }
