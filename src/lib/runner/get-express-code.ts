@@ -96,6 +96,7 @@ async function createDB(collection, schema) {
       function applyFilter(q) {
         if (!filters) return q;
         for (const filter of filters) {
+          const value = filter.value;
           if (filter.type === "like") {
             q = q.whereLike(filter.column, '%' + value + '%');
           } else if (filter.type === "in") {
