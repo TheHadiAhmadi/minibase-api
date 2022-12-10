@@ -1,7 +1,7 @@
 import { VM } from "vm2";
 import { error } from "./utils";
 import * as jsonwebtoken from "jsonwebtoken";
-import * as bcrypt from 'bcrypt'
+import * as bcrypt from "bcrypt";
 
 export async function runJS(
   request: Request,
@@ -40,10 +40,6 @@ export async function runJS(
       db,
       env,
       utils,
-      packages: {
-        jsonwebtoken: jsonwebtoken.default,
-        bcrypt
-      },
     };
 
     // vm.freeze(request, "__request");
@@ -55,6 +51,8 @@ export async function runJS(
     vm.freeze(Response, "Response");
     vm.freeze(body, "body");
     vm.freeze(ctx, "ctx");
+    vm.freeze(bcrypt, "bcrypt"),
+      vm.freeze(jsonwebtoken.default, "jsonwebtoken");
 
     const output = await vm.run(input);
 
