@@ -21,6 +21,8 @@ let getCode = (
 ) => `const express = require("express");
 const knex = require("knex");
 const crypto = require('crypto');
+const jsonwebtoken = require('jsonwebtoken')
+const bcrypt = require('bcrypt')
 const cors = require('cors')
 
 const app = express();
