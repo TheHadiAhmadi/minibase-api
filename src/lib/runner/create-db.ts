@@ -52,7 +52,8 @@ export function createDB(project: string, collection: string) {
       console.time("JS: find");
       let allRows = await db("rows")
         .select("data", "id")
-        .where({ project, collection });
+        .where({ project, collection })
+        .then((rows) => rows.map((row) => ({ ...row.data, id: row.id })));
 
       function applyFilter(rows: CollectionRow[]) {
         if (!filters || filters.length === 0) return rows;
