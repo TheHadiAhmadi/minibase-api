@@ -104,7 +104,7 @@ export async function deployProject(name: string) {
     alias: [`minibase-project-${name}.vercel.app`],
     files: await Promise.all([
       uploadCodeToVercel("index.js", code),
-      uploadCodeToVercel("package.json", getPackageJSON([])),
+      uploadCodeToVercel("package.json", getPackageJSON()),
     ]),
   });
 
