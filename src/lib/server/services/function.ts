@@ -16,6 +16,7 @@ export const addFunction: ServiceAddFunction = async ({ project, body }) => {
       project,
       name: body.name,
       code: body.code,
+      method: body.method ?? "POST",
       routes: body.routes.join(" "),
     });
   } catch (err) {
