@@ -59,12 +59,8 @@ async function createDeployment({
           src: "index.js",
         },
       ],
-      routes: [
-        {
-          src: "/(.*)",
-          dest: "index.js",
-        },
-      ],
+      rewrites: [{ source: "/(.*)", destination: "/" }],
+
       headers: [
         {
           source: "/(.*)",
