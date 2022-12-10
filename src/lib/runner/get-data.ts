@@ -100,18 +100,27 @@ export async function getClientSideCode(
   return result;
 }
 
-export function getPackageJSON(packages: string[]) {
+const defaultPackages = [
+  "express",
+  "knex",
+  "cors",
+  "sqlite3",
+  "jsonwebtoken",
+  "bcrypt",
+];
+
+export function getPackageJSON(packages: string[] = defaultPackages) {
+  const dependencies: any = {};
+
+  for (let pack of packages) {
+    dependencies[pack] = "latest";
+  }
+
   return JSON.stringify({
     name: "backend",
     version: "1.0.0",
     main: "index.js",
     license: "ISC",
-    dependencies: {
-      cors: "^2.8.5",
-      express: "^4.18.2",
-      jsonwebtoken: "^8.5.1",
-      knex: "^2.3.0",
-      sqlite3: "^5.1.2",
-    },
+    dependencies,
   });
 }
