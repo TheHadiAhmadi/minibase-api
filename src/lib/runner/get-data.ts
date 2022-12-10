@@ -99,3 +99,19 @@ export async function getClientSideCode(
   }
   return result;
 }
+
+export function getPackageJSON(packages: string[]) {
+  return JSON.stringify({
+    name: "backend",
+    version: "1.0.0",
+    main: "index.js",
+    license: "ISC",
+    dependencies: {
+      cors: "^2.8.5",
+      express: "^4.18.2",
+      jsonwebtoken: "^8.5.1",
+      knex: "^2.3.0",
+      sqlite3: "^5.1.2",
+    },
+  });
+}
