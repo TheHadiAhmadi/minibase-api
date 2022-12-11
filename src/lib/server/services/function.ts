@@ -36,6 +36,7 @@ export const getFunctions: ServiceGetFunctions = async ({ project }) => {
 };
 
 export const editFunction: ServiceEditFunction = async ({ id, body }) => {
+  console.log("edit function", body);
   await db("functions")
     .update({ ...body, routes: body.routes.join(" ") ?? null })
     .where({ id });

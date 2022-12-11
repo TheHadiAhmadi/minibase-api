@@ -5,7 +5,7 @@ export async function getRequiredData({ project, name }) {
   console.time("getRequiredData");
   const [projectObject, functionObject, collectionsList] = await Promise.all([
     db("projects").select("*").where({ name: project }).first(),
-    db("functions").select("code").where({ project, name }).first(),
+    db("functions").select("code", "method").where({ project, name }).first(),
     db("collections").select("name").where({ project }),
   ]);
 
@@ -15,6 +15,7 @@ export async function getRequiredData({ project, name }) {
   console.timeEnd("getRequiredData");
   return {
     code: functionObject.code,
+    method: functionObject.method,
     env: JSON.parse(projectObject.env),
     collectionsList: collectionsList.map((data) => data.name),
   };

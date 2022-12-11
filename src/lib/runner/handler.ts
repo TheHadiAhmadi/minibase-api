@@ -18,7 +18,7 @@ export async function handle({
     console.log("handle", { project, name });
     if (!project) error("Project not found", 404);
 
-    const { code, env, collectionsList } = await getRequiredData({
+    const { code, method, env, collectionsList } = await getRequiredData({
       project,
       name,
     });
@@ -28,7 +28,7 @@ export async function handle({
       return prev;
     }, {});
 
-    const response = await runJS(request, code, env, collections);
+    const response = await runJS(request, method, code, env, collections);
     console.timeEnd("handle");
     return response;
   } catch (err: any) {

@@ -26,6 +26,7 @@ export async function initDB() {
       builder.string("id").notNullable().primary();
       builder.string("project").notNullable();
       builder.text("routes").notNullable();
+      builder.string("method").notNullable().defaultTo("POST");
       builder.string("name").notNullable();
       builder.text("code").notNullable();
     });

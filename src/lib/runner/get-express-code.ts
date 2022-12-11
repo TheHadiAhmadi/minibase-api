@@ -1,7 +1,7 @@
 import type { ProjectCollection, ProjectFunction } from "$lib/types";
 
-let getFunction = (name, code) => `
-app.post("/${name}", async (req, res) => {
+let getFunction = (method: string, name: string, code: string) => `
+app.${method.toLowerCase()}("/${name}", async (req, res) => {
   let handle;
 
   ${code}
@@ -10,7 +10,9 @@ app.post("/${name}", async (req, res) => {
   const authorizationHeader = req.headers['authorization']
   const token = authorizationHeader ? authorizationHeader.split(' ')[1] : ""
 
-  const result = await handle(req.body, {...ctx, token });
+  ${method === "GET" ? "let body = req.query" : "let body = req.body"}
+  
+  const result = await handle(body, {...ctx, token });
   return res.json(result);
 });
 `;
@@ -181,7 +183,7 @@ export function getExpressCode(
   functions: ProjectFunction[]
 ) {
   const functionsStr = functions
-    .map((fn) => getFunction(fn.name, fn.code))
+    .map((fn) => getFunction(fn.method, fn.name, fn.code))
     .join("\n\n");
 
   const collectionsStr = JSON.stringify(collections);
