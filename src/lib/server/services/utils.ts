@@ -1,3 +1,5 @@
+import { json } from "@sveltejs/kit";
+
 export class ResponseError extends Error {
   status: number;
   constructor(status: number, message: string) {
@@ -35,5 +37,5 @@ export function respond(body: {
   const headers = body.headers ?? {};
   const data = body.data ?? {};
 
-  return new Response(JSON.stringify({ data, status }), { status, headers });
+  return json({ data, status }, { status, headers });
 }

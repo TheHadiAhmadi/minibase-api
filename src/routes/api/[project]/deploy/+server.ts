@@ -8,8 +8,8 @@ export async function POST({ request, locals, params }: RequestEvent) {
     APIKEY_SCOPES.PROJECT_ADMIN,
   ]);
 
-  const name = params.project;
-  const data = await deployProject(name);
+  const body = await request.json()
+  const data = await deployProject(body);
 
   return respond({ data });
 }

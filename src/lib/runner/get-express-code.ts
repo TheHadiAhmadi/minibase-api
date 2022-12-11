@@ -19,13 +19,9 @@ app.${method.toLowerCase()}("/${name}", async (req, res) => {
 
 let getCode = (
   tables: string,
-  functions: string
-) => `const express = require("express");
-const knex = require("knex");
-const crypto = require('crypto');
-const jsonwebtoken = require('jsonwebtoken')
-const bcrypt = require('bcrypt')
-const cors = require('cors')
+  functions: string,
+  imports: string
+) => `${imports}
 
 const app = express();
 app.use(express.json());
@@ -35,12 +31,11 @@ let ctx = {}
 
 let tables = ${tables}
 
-// Update client and connection
+
 const db = new knex({
   useNullAsDefault: true,
-  client: "sqlite3",
-  connection: ":memory:",
-  debug: true,
+  client: "%%database_client%%",
+  connection: '%%database_uri%%',
 });
 
 async function createDB(collection, schema) {
@@ -178,15 +173,43 @@ init().then(() => {
 module.exports = app
 `;
 
+function getImports(packages: string[]) {
+  let str = "";
+
+  for (let pack of packages) {
+    str += `const ${pack} = require("${pack}");\n`;
+  }
+
+  return str;
+}
+
 export function getExpressCode(
   collections: ProjectCollection[],
-  functions: ProjectFunction[]
+  functions: ProjectFunction[],
+  options: any
 ) {
   const functionsStr = functions
     .map((fn) => getFunction(fn.method, fn.name, fn.code))
     .join("\n\n");
 
-  const collectionsStr = JSON.stringify(collections);
+  const collectionsStr = JSON.stringify(
+    collections.map((collection) => ({
+      name: collection.name,
+      schema: collection.schema,
+    })),
+    null,
+    2
+  );
 
-  return getCode(collectionsStr, functionsStr);
+  const importsStr = getImports(options.packages);
+
+  let code = getCode(collectionsStr, functionsStr, importsStr);
+
+  code = code.replace(
+    "%%database_client%%",
+    options.database_client ?? "sqlite3"
+  );
+  code = code.replace("%%database_uri%%", options.database_uri ?? ":memory:");
+
+  return code;
 }

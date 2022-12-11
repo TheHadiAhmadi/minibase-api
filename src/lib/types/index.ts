@@ -22,6 +22,7 @@ export type Project = {
   name: string;
   env?: Record<string, string>;
   id?: string;
+  packages?: string[];
   apiKeys?: ApiKey[];
 };
 export type ProjectInfo = Project & {

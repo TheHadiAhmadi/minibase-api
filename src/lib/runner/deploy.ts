@@ -13,7 +13,8 @@ type VercelFile = {
 
 async function uploadCodeToVercel(
   file: string,
-  code: string
+  code: string,
+  vercel_token: string
 ): Promise<VercelFile> {
   const sha = shasum(code);
 
@@ -21,7 +22,7 @@ async function uploadCodeToVercel(
     method: "POST",
     headers: {
       "x-vercel-digest": sha,
-      Authorization: `Bearer ${VERCEL_TOKEN}`,
+      Authorization: `Bearer ${vercel_token ?? VERCEL_TOKEN}`,
       "Content-Type": "text/plain",
     },
     body: code,
@@ -38,15 +39,17 @@ async function createDeployment({
   name,
   alias,
   files,
+  vercel_token,
 }: {
   name: string;
   alias: string[];
   files: VercelFile[];
+  vercel_token?: string;
 }): any {
   const result = await fetch("https://api.vercel.com/v13/deployments", {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${VERCEL_TOKEN}`,
+      Authorization: `Bearer ${vercel_token ?? VERCEL_TOKEN}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
@@ -89,28 +92,68 @@ async function createDeployment({
   return result;
 }
 
-export async function deployProject(name: string) {
+export async function deployProject({
+  name,
+  url,
+  database_uri,
+  database_client,
+  vercel_token,
+}: Record<string, string>) {
   const project = await getProject({ name });
 
-  if (!project) error("project not found");
+  console.log(project);
+  if (!project) error("project not found", 404);
 
-  const code = await getExpressCode(
-    await project.collections,
-    await project.functions
-  );
+  let default_packages = [
+    "express",
+    "knex",
+    "crypto",
+    "jsonwebtoken",
+    "bcrypt",
+    "cors",
+    database_client ?? "sqlite3",
+  ];
+  const collections = await project.collections;
+  const functions = await project.functions;
 
-  const result = await createDeployment({
-    name: `minibase-project-${name}`,
-    alias: [`minibase-project-${name}.vercel.app`],
-    files: await Promise.all([
-      uploadCodeToVercel("index.js", code),
-      uploadCodeToVercel("package.json", getPackageJSON()),
-    ]),
-  });
+  let code;
+  console.log({ collections, functions });
+  try {
+    code = await getExpressCode(
+      await project.collections,
+      await project.functions,
+      {
+        database_client,
+        database_uri,
+        packages: default_packages,
+      }
+    );
+  } catch (err) {
+    console.log(err);
+  }
 
-  console.log(result);
+  try {
+    console.log({ code });
+    const result = await createDeployment({
+      name: `minibase-project-${name}`,
+      alias: [url ?? `minibase-project-${name}.vercel.app`],
+      vercel_token,
+      files: await Promise.all([
+        uploadCodeToVercel("index.js", code, vercel_token),
+        uploadCodeToVercel(
+          "package.json",
+          getPackageJSON(default_packages),
+          vercel_token
+        ),
+      ]),
+    });
 
-  return {
-    urls: [...result.alias, result.url],
-  };
+    console.log(result);
+
+    return {
+      urls: [...result.alias, result.url],
+    };
+  } catch (err) {
+    console.log(err);
+  }
 }

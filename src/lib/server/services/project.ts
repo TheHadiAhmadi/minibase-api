@@ -51,6 +51,7 @@ export const updateProject: ServiceUpdateProject = async ({ name, body }) => {
 export const addProject: ServiceAddProject = async ({ body }) => {
   body.id = crypto.randomUUID();
   body.env = {};
+  body.packages = ["express", "knex", "cors", "crypto"];
 
   const apiKey = await addApiKey({
     project: body.name,
@@ -61,10 +62,10 @@ export const addProject: ServiceAddProject = async ({ body }) => {
     },
   });
 
-  console.log(body.env);
   await db("projects").insert({
     name: body.name,
     env: JSON.stringify(body.env),
+    packages: JSON.stringify(body.packages),
     id: body.id,
   });
 
@@ -81,6 +82,7 @@ export const getProject: ServiceGetPorject = async ({ name }) => {
   return {
     ...project,
     env: JSON.parse(project.env ?? {}),
+    packages: JSON.parse(project.packages ?? []),
     functions: getFunctions({ project: name }),
     collections: getCollections({ project: name }),
     apiKeys: getApiKeys({ project: name }),

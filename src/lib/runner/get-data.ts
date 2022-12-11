@@ -101,16 +101,7 @@ export async function getClientSideCode(
   return result;
 }
 
-const defaultPackages = [
-  "express",
-  "knex",
-  "cors",
-  "sqlite3",
-  "jsonwebtoken",
-  "bcrypt",
-];
-
-export function getPackageJSON(packages: string[] = defaultPackages) {
+export function getPackageJSON(packages: string[]) {
   const dependencies: any = {};
 
   for (let pack of packages) {

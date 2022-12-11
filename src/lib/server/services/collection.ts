@@ -1,4 +1,5 @@
 import db from "$lib/server/db";
+import type { CollectionSchema } from "$lib/types";
 import type {
   ServiceAddCollection,
   ServiceEditCollection,
@@ -11,10 +12,17 @@ export const getCollections: ServiceGetCollections = async ({ project }) => {
   const result = await db("collections").where({ project });
   console.log("DB", "collections", result);
 
-  return result.map((r) => ({
-    ...r,
-    schema: JSON.parse(r.schema),
-  }));
+  return result.map((r) => {
+    let schema: CollectionSchema[] = JSON.parse(r.schema);
+    if (!schema.some((item) => item.name === "id")) {
+      schema.push({ name: "id", type: "string" });
+    }
+
+    return {
+      ...r,
+      schema,
+    };
+  });
 };
 
 export const addCollection: ServiceAddCollection = async ({ body }) => {
