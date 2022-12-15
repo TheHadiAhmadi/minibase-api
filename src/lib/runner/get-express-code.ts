@@ -149,7 +149,7 @@ async function createDB(collection, schema) {
 }
 
 async function init() {
-  await Promise.all(tables.map(table => {
+  await Promise.all(tables.map(async table => {
     ctx.db[table.name] = await createDB(table.name, table.schema)
   }))
 }
