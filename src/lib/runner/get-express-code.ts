@@ -20,7 +20,8 @@ app.${method.toLowerCase()}("/${name}", async (req, res) => {
 let getCode = (
   tables: string,
   functions: string,
-  imports: string
+  imports: string,
+  env: any
 ) => `${imports}
 
 const app = express();
@@ -29,7 +30,7 @@ app.use(cors());
 
 let ctx = {
   db: {},
-  env: process.env
+  env: ${env}
 }
 
 let tables = ${tables}
@@ -38,15 +39,17 @@ let tables = ${tables}
 const db = new knex({
   useNullAsDefault: true,
   client: "%%database_client%%",
-  connection: '%%database_uri%%',
+  connection: ctx.env.DATABASE_URL,
 });
 
-async function createDB(collection, schema) {
-  const hasExists = await db.schema.hasTable(collection);
+const existingTables = {};
+async function createTableIfNotExists(table) {
+  if (existingTables[table.name]) return;
 
+  const hasExists = await db.schema.hasTable(table.name);
   if (!hasExists) {
-    await db.schema.createTable(collection, (builder) => {
-      for (let item of schema) {
+    await db.schema.createTable(table.name, (builder) => {
+      for (let item of table.schema) {
         if (item.type === "string") {
           builder.text(item.name);
         } else if (item.type === "number") {
@@ -61,10 +64,15 @@ async function createDB(collection, schema) {
       }
     });
   }
+  existingTables[table.name] = true;
+}
+
+function createDB(table) {
   return {
     async insert(data) {
+      await createTableIfNotExists(table);
       const id = crypto.randomUUID();
-      await db(collection).insert({
+      await db(table.name).insert({
         ...data,
         id,
       });
@@ -72,23 +80,27 @@ async function createDB(collection, schema) {
       return { ...data, id };
     },
     async remove(id) {
-      await db(collection).delete().where({ id });
+      await createTableIfNotExists(table);
+      await db(table.name).delete().where({ id });
 
       return true;
     },
     async update(id, data) {
-      await db(collection).update(data).where({ id });
+      await createTableIfNotExists(table);
+      await db(table.name).update(data).where({ id });
 
       return { ...data, id };
     },
     async get(id) {
-      const result = await db(collection).select("*").where({ id }).first();
+      await createTableIfNotExists(table);
+      const result = await db(table.name).select("*").where({ id }).first();
 
       if (!result) return null;
 
       return result;
     },
     async filter({ perPage, page, sort, filters } = {}) {
+      await createTableIfNotExists(table);
       perPage = perPage || 10;
       page = page || 1;
 
@@ -100,7 +112,7 @@ async function createDB(collection, schema) {
         for (const filter of filters) {
           const value = filter.value;
           if (filter.type === "like") {
-            q = q.whereLike(filter.column, '%' + value + '%');
+            q = q.whereLike(filter.column, "%" + value + "%");
           } else if (filter.type === "in") {
             q = q.whereIn(filter.column, value);
           } else if (filter.type === "between") {
@@ -123,9 +135,9 @@ async function createDB(collection, schema) {
         return q.orderBy(sort);
       }
 
-      const countQuery = db(collection).count("* as count").first();
+      const countQuery = db(table.name).count("* as count").first();
 
-      let dataQuery = db(collection).select("*");
+      let dataQuery = db(table.name).select("*");
 
       dataQuery = applyFilter(dataQuery);
       dataQuery = applyPagination(dataQuery);
@@ -148,19 +160,22 @@ async function createDB(collection, schema) {
   };
 }
 
-async function init() {
-  await Promise.all(tables.map(async table => {
-    ctx.db[table.name] = await createDB(table.name, table.schema)
-  }))
+
+function init() {
+  tables.map((table) => {
+    ctx.db[table.name] = createDB(table.name, table.schema);
+  });
 }
+
 
 ${functions}
 
-init().then(() => {
-  const port = process.env.PORT || 3000;
-  app.listen(port, () => {
-    console.log("server started at port " + port + "!");
-  });
+init();
+
+const port = process.env.PORT || 3000;
+
+app.listen(port, () => {
+  console.log("server started at port " + port + "!");
 });
 
 module.exports = app
@@ -194,15 +209,18 @@ export function getExpressCode(
     2
   );
 
+  if (options.database_uri) options.env["DATABASE_URI"] = options.database_uri;
+
+  const envStr = JSON.stringify(options.env);
+
   const importsStr = getImports(options.packages);
 
-  let code = getCode(collectionsStr, functionsStr, importsStr);
+  let code = getCode(collectionsStr, functionsStr, importsStr, envStr);
 
   code = code.replace(
     "%%database_client%%",
     options.database_client ?? "sqlite3"
   );
-  code = code.replace("%%database_uri%%", options.database_uri ?? ":memory:");
 
   return code;
 }
