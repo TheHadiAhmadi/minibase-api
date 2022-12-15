@@ -126,6 +126,7 @@ export async function deployProject({
         database_client,
         database_uri,
         packages: default_packages,
+        env: project.env
       }
     );
   } catch (err) {
