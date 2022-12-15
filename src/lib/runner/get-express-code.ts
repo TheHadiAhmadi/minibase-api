@@ -27,7 +27,10 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-let ctx = {}
+let ctx = {
+  db: {},
+  env: process.env
+}
 
 let tables = ${tables}
 
@@ -146,19 +149,9 @@ async function createDB(collection, schema) {
 }
 
 async function init() {
-  const db = {}
-
-  for(let table of tables) {
-    db[table.name] = await createDB(table.name, table.schema)
-  }
-
-  ctx = {
-    db,
-    packages: {
-    //    jsonwebtoken: require('jsonwebtoken')
-    },
-    env: process.env,
-  };
+  await Promise.all(tables.map(table => {
+    ctx.db[table.name] = await createDB(table.name, table.schema)
+  }))
 }
 
 ${functions}
