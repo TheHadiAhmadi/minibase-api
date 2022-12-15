@@ -163,7 +163,7 @@ function createDB(table) {
 
 function init() {
   tables.map((table) => {
-    ctx.db[table.name] = createDB(table.name, table.schema);
+    ctx.db[table.name] = createDB(table);
   });
 }
 
